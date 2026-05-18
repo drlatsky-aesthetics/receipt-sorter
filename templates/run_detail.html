@@ -32,6 +32,21 @@
 </div>
 {% endif %}
 
+{% set account_errors = items | selectattr('status', 'equalto', 'error') | list %}
+{% if account_errors %}
+<div class="alert alert-danger small mb-3">
+  <strong><i class="bi bi-exclamation-triangle me-1"></i>Errors ({{ account_errors | length }}):</strong>
+  <ul class="mb-0 mt-1">
+    {% for item in account_errors %}
+    <li>
+      <strong>{{ item.account_email or 'Account' }}:</strong>
+      {{ item.error_msg or 'Unknown error' }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 {% if items %}
 <div class="card border-secondary">
   <div class="card-body p-0">

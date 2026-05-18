@@ -13,7 +13,7 @@ import db
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive",
     "openid",
     "https://www.googleapis.com/auth/userinfo.email",
 ]
