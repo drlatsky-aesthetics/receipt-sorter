@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import base64
+import hashlib
 import os
 import secrets
 import threading
@@ -58,6 +60,13 @@ def _make_flow():
     return Flow.from_client_secrets_file(
         str(CLIENT_SECRET_PATH), scopes=SCOPES, redirect_uri=_redirect_uri()
     )
+
+
+def _pkce():
+    verifier = secrets.token_urlsafe(64)[:96]
+    digest = hashlib.sha256(verifier.encode()).digest()
+    challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
+    return verifier, challenge
 
 
 # ── Auth guard ────────────────────────────────────────────────────────────────
@@ -121,9 +130,16 @@ def connect_account():
         return redirect(url_for("accounts"))
     if _redirect_uri().startswith("http://"):
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    verifier, challenge = _pkce()
+    session["pkce_verifier"] = verifier
+
     flow = _make_flow()
     auth_url, state = flow.authorization_url(
-        access_type="offline", prompt="select_account", include_granted_scopes="true"
+        access_type="offline",
+        prompt="select_account",
+        include_granted_scopes="true",
+        code_challenge=challenge,
+        code_challenge_method="S256",
     )
     session["oauth_state"] = state
     return redirect(auth_url)
@@ -138,7 +154,10 @@ def auth_callback():
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     try:
         flow = _make_flow()
-        flow.fetch_token(authorization_response=request.url)
+        flow.fetch_token(
+            authorization_response=request.url,
+            code_verifier=session.pop("pkce_verifier", None),
+        )
         creds = flow.credentials
         gmail = build("gmail", "v1", credentials=creds)
         email = gmail.users().getProfile(userId="me").execute()["emailAddress"]
