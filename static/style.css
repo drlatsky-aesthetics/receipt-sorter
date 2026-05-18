@@ -1,0 +1,57 @@
+body {
+  background-color: #0f1117;
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+.navbar {
+  background-color: #16181f !important;
+}
+
+.card {
+  background-color: #16181f;
+}
+
+.list-group-item {
+  border-color: rgba(255,255,255,.08);
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: rgba(255,255,255,.03);
+  --bs-table-border-color: rgba(255,255,255,.08);
+}
+
+.table thead th {
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  font-weight: 500;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+}
+
+.navbar-brand {
+  font-size: 1rem;
+  letter-spacing: -.01em;
+}
+
+code {
+  color: #fbbf24;
+  background: rgba(251,191,36,.1);
+  padding: .1rem .3rem;
+  border-radius: .25rem;
+  font-size: .85em;
+}
+
+.btn-warning {
+  color: #0f1117;
+}
+
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}

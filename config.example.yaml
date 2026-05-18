@@ -1,0 +1,92 @@
+# ─── Receipt Sorter Configuration ────────────────────────────────────────────
+# Copy this to config.yaml and fill in your values.
+# NEVER commit config.yaml — it contains API keys.
+
+# ── API Keys ──────────────────────────────────────────────────────────────────
+anthropic_api_key: "sk-ant-YOUR_KEY_HERE"
+
+# ── Web UI ────────────────────────────────────────────────────────────────────
+# Password to log into the web dashboard
+admin_password: "change-me-please"
+
+# ── Schedule ──────────────────────────────────────────────────────────────────
+# Time to run automatically each day (24h, Toronto/Eastern time)
+schedule_time: "08:00"
+
+# How many days back to scan for unprocessed emails
+days_back: 7
+
+# Gmail label applied after successful filing (prevents re-processing)
+processed_label: "receipt-sorted"
+
+# ── Expense Categories ────────────────────────────────────────────────────────
+# Each category needs:
+#   description: Tells Claude what belongs here
+#   folder_id:   Google Drive folder ID (from URL: drive.google.com/drive/folders/FOLDER_ID_HERE)
+#
+# Receipts are filed into the matching Drive folder.
+# "uncategorized" is automatic — emails that don't match are skipped.
+# ─────────────────────────────────────────────────────────────────────────────
+categories:
+
+  treasury_devices:
+    description: >
+      Laser equipment, aesthetics devices, medical devices, RF systems,
+      LED panels, IPL filters, device servicing, Quanta, VirtueRF,
+      NOUVADerm, Healite, OxyGeneo, PlaDuo, Dermalux, OBSERV
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  treasury_supplies:
+    description: >
+      Skincare products, serums, exosomes, injectables, consumables,
+      NOON Aesthetics, iS Clinical, Epicutis, ASCEplus, AlumierMD,
+      Pavise, needles, PPE, clinic supplies
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  treasury_operations:
+    description: >
+      Clinic rent, utilities, insurance, cleaning, clinic software,
+      Phorest, scheduling tools, staff payroll, marketing, signage,
+      photography, Treasury Aesthetics overhead
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  mpc_office:
+    description: >
+      Medical office supplies, EMR software, Oscar, fax, printer,
+      phone, internet, office equipment, clinic furniture, stationery,
+      MPC general overhead, professional corporation expenses
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  mpc_professional:
+    description: >
+      CPSO fees, CME courses, medical conferences, journals,
+      medical books, licensing, OHIP billing software, legal,
+      accounting, CPA fees, professional development
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  travel:
+    description: >
+      Flights, hotels, Airbnb, car rental, Uber, taxis, transit,
+      business travel, conference travel, meals during travel,
+      vehicle expenses, parking, Porsche
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  technology:
+    description: >
+      Apple, computer hardware, software subscriptions, SaaS,
+      cloud services, domain names, hosting, Vercel, Supabase,
+      Twilio, GitHub, Adobe, tech accessories
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  meals_entertainment:
+    description: >
+      Business meals, client dinners, restaurants, coffee,
+      team lunches, hospitality, entertainment for business purposes
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"
+
+  personal:
+    description: >
+      Personal purchases not related to business, home, Amazon
+      personal orders, grocery, personal subscriptions, Netflix,
+      Spotify, personal clothing
+    folder_id: "GOOGLE_DRIVE_FOLDER_ID_HERE"

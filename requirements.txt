@@ -1,0 +1,8 @@
+flask>=3.0
+anthropic>=0.40
+google-auth>=2.28
+google-auth-oauthlib>=1.2
+google-api-python-client>=2.120
+apscheduler>=3.10
+pyyaml>=6.0
+gunicorn>=22.0

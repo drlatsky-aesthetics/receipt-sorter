@@ -1,0 +1,29 @@
+# Config (contains API keys — never commit)
+config.yaml
+.secret_key
+
+# Google OAuth tokens and credentials
+credentials/token*.json
+credentials/client_secret.json
+
+# Database (local state)
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Receipt Sorter{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-semibold mb-0"><i class="bi bi-speedometer2 text-warning me-2"></i>Dashboard</h4>
+    <p class="text-muted small mb-0">Auto-file Gmail receipts to Google Drive</p>
+  </div>
+  <form method="post" action="/run">
+    <button class="btn btn-warning fw-semibold px-4" {% if active_run %}disabled{% endif %}>
+      {% if active_run %}
+        <span class="spinner-border spinner-border-sm me-1"></span>Running…
+      {% else %}
+        <i class="bi bi-play-fill me-1"></i>Run Now
+      {% endif %}
+    </button>
+  </form>
+</div>
+
+<!-- Status cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card h-100 border-secondary">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-warning">{{ accounts | length }}</div>
+        <div class="text-muted small">Accounts</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100 border-secondary">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-success">{{ accounts | selectattr('enabled', 'equalto', 1) | list | length }}</div>
+        <div class="text-muted small">Active</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100 border-secondary">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-info">{{ recent_runs | length }}</div>
+        <div class="text-muted small">Recent Runs</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100 border-secondary">
+      <div class="card-body text-center">
+        {% if next_run %}
+          <div class="fs-5 fw-bold text-warning">{{ next_run.strftime('%H:%M') }}</div>
+          <div class="text-muted small">Next run ({{ next_run.strftime('%b %d') }})</div>
+        {% else %}
+          <div class="fs-5 fw-bold text-muted">—</div>
+          <div class="text-muted small">Next run</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Accounts summary -->
+<div class="card border-secondary mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center py-2">
+    <span class="fw-semibold small"><i class="bi bi-person-badge me-1"></i>Connected Accounts</span>
+    <a href="/accounts" class="btn btn-sm btn-outline-secondary">Manage</a>
+  </div>
+  <div class="card-body p-0">
+    {% if accounts %}
+    <ul class="list-group list-group-flush">
+      {% for acc in accounts %}
+      <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-3 py-2">
+        <div>
+          <i class="bi bi-envelope me-2 text-muted"></i>
+          <span class="small">{{ acc.email }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          {% if acc.last_run_at %}
+            <span class="text-muted" style="font-size:.75rem;">Last: {{ acc.last_run_at[:10] }}</span>
+          {% endif %}
+          <span class="badge {% if acc.enabled %}bg-success{% else %}bg-secondary{% endif %}">
+            {% if acc.enabled %}Active{% else %}Paused{% endif %}
+          </span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-person-plus fs-3 d-block mb-2"></i>
+      No accounts connected yet. <a href="/accounts">Add one →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Recent runs -->
+<div class="card border-secondary">
+  <div class="card-header d-flex justify-content-between align-items-center py-2">
+    <span class="fw-semibold small"><i class="bi bi-clock-history me-1"></i>Recent Runs</span>
+    <a href="/history" class="btn btn-sm btn-outline-secondary">Full History</a>
+  </div>
+  <div class="card-body p-0">
+    {% if recent_runs %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="text-muted small">
+          <tr>
+            <th class="px-3">Time</th>
+            <th>Trigger</th>
+            <th>Filed</th>
+            <th>Skipped</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody class="small">
+          {% for run in recent_runs %}
+          <tr>
+            <td class="px-3 text-muted">{{ run.started_at[:16].replace('T',' ') if run.started_at else '—' }}</td>
+            <td>
+              {% if run.triggered_by == 'manual' %}
+                <span class="badge bg-primary bg-opacity-25 text-primary">manual</span>
+              {% else %}
+                <span class="badge bg-secondary bg-opacity-25 text-secondary">scheduled</span>
+              {% endif %}
+            </td>
+            <td class="text-success fw-semibold">{{ run.total_processed }}</td>
+            <td class="text-muted">{{ run.total_skipped }}</td>
+            <td>
+              {% if run.status == 'done' %}
+                <span class="badge bg-success bg-opacity-25 text-success">done</span>
+              {% elif run.status == 'running' %}
+                <span class="badge bg-warning bg-opacity-25 text-warning">
+                  <span class="spinner-border spinner-border-sm me-1" style="width:.6rem;height:.6rem;"></span>running
+                </span>
+              {% else %}
+                <span class="badge bg-danger bg-opacity-25 text-danger">error</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted small">
+      No runs yet. Click <strong>Run Now</strong> to process your emails.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if active_run %}
+<script>
+  setTimeout(() => location.reload(), 5000);
+</script>
+{% endif %}
+{% endblock %}

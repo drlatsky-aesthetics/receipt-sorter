@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Accounts — Receipt Sorter{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-semibold mb-0"><i class="bi bi-person-badge text-warning me-2"></i>Google Accounts</h4>
+    <p class="text-muted small mb-0">Connect any Gmail account to sort its receipts</p>
+  </div>
+  <a href="/accounts/connect" class="btn btn-warning fw-semibold">
+    <i class="bi bi-plus-lg me-1"></i>Add Account
+  </a>
+</div>
+
+{% if accounts %}
+<div class="card border-secondary">
+  <div class="card-body p-0">
+    <ul class="list-group list-group-flush">
+      {% for acc in accounts %}
+      <li class="list-group-item bg-transparent px-3 py-3">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="bi bi-google text-muted"></i>
+              <strong class="small">{{ acc.email }}</strong>
+              <span class="badge {% if acc.enabled %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if acc.enabled %}Active{% else %}Paused{% endif %}
+              </span>
+            </div>
+            <div class="text-muted" style="font-size:.75rem;">
+              <span class="me-3"><i class="bi bi-link-45deg me-1"></i>Connected {{ acc.connected_at[:10] if acc.connected_at else '—' }}</span>
+              {% if acc.last_run_at %}
+                <span><i class="bi bi-clock me-1"></i>Last sorted {{ acc.last_run_at[:10] }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <form method="post" action="/accounts/{{ acc.email }}/toggle">
+              <button type="submit" class="btn btn-sm {% if acc.enabled %}btn-outline-secondary{% else %}btn-outline-success{% endif %}">
+                {% if acc.enabled %}
+                  <i class="bi bi-pause me-1"></i>Pause
+                {% else %}
+                  <i class="bi bi-play me-1"></i>Enable
+                {% endif %}
+              </button>
+            </form>
+            <form method="post" action="/accounts/{{ acc.email }}/disconnect"
+                  onsubmit="return confirm('Disconnect {{ acc.email }}? You can reconnect anytime.')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-x-lg me-1"></i>Disconnect
+              </button>
+            </form>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% else %}
+<div class="card border-secondary">
+  <div class="card-body text-center py-5 text-muted">
+    <i class="bi bi-person-plus-fill fs-1 d-block mb-3 text-warning opacity-50"></i>
+    <h5>No accounts connected</h5>
+    <p class="small mb-3">Click <strong>Add Account</strong> to connect a Gmail account.<br>
+       You can connect multiple Google accounts — they'll all be sorted daily.</p>
+    <a href="/accounts/connect" class="btn btn-warning">
+      <i class="bi bi-plus-lg me-1"></i>Add Account
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="card border-secondary mt-4">
+  <div class="card-header py-2">
+    <span class="fw-semibold small"><i class="bi bi-info-circle me-1"></i>Setup Notes</span>
+  </div>
+  <div class="card-body small text-muted">
+    <p class="mb-2">Before connecting accounts, make sure <code>credentials/client_secret.json</code> exists (see README).</p>
+    <p class="mb-2">Each account connects via Google OAuth — you'll be prompted to choose which Google account to link.</p>
+    <p class="mb-0">Tokens refresh automatically. Connected accounts listed here: <code>drjlatsky@gmail.com</code>, <code>drlatsky@treasuryhealth.ca</code>, <code>aesthetics@treasuryhealth.ca</code></p>
+  </div>
+</div>
+
+{% endblock %}
