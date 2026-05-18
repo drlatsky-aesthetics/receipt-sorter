@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Settings — Receipt Sorter{% endblock %}
+{% block content %}
+
+<h4 class="fw-semibold mb-1"><i class="bi bi-folder2-open text-warning me-2"></i>Google Drive Folders</h4>
+<p class="text-muted small mb-4">
+  For each category, paste the folder ID from Google Drive.<br>
+  Open the folder in Drive → copy the last part of the URL:<br>
+  <code>drive.google.com/drive/folders/<strong>THIS_IS_THE_FOLDER_ID</strong></code>
+</p>
+
+<form method="post">
+  <div class="card border-secondary mb-4">
+    <div class="card-body p-0">
+      {% for name, info in categories.items() %}
+      <div class="p-3 {% if not loop.last %}border-bottom border-secondary{% endif %}">
+        <label class="form-label fw-semibold small mb-1 text-capitalize">
+          {{ name.replace('_', ' ') }}
+        </label>
+        <div class="text-muted mb-2" style="font-size:.78rem;">{{ info.description }}</div>
+        <input
+          type="text"
+          class="form-control form-control-sm font-monospace"
+          name="folder_{{ name }}"
+          value="{{ saved.get('folder_' + name, '') }}"
+          placeholder="Paste Google Drive folder ID here"
+        >
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-warning fw-semibold px-4">
+    <i class="bi bi-check-lg me-1"></i>Save Folder IDs
+  </button>
+</form>
+
+<div class="card border-secondary mt-4">
+  <div class="card-header py-2">
+    <span class="fw-semibold small"><i class="bi bi-question-circle me-1"></i>How to find a folder ID</span>
+  </div>
+  <div class="card-body small text-muted">
+    <ol class="mb-0 ps-3">
+      <li class="mb-1">Open <strong>Google Drive</strong> in your browser</li>
+      <li class="mb-1">Create a folder for the category (e.g. "Treasury Devices") or open an existing one</li>
+      <li class="mb-1">Look at the browser URL bar — it ends with a long string of letters and numbers</li>
+      <li class="mb-1">Copy everything after <code>folders/</code> — that's the folder ID</li>
+      <li>Paste it into the field above and click Save</li>
+    </ol>
+  </div>
+</div>
+
+{% endblock %}

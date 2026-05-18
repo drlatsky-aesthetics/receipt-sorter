@@ -46,6 +46,10 @@ def init():
             status      TEXT,
             error_msg   TEXT
         );
+        CREATE TABLE IF NOT EXISTS settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        );
         """)
 
 
@@ -135,6 +139,27 @@ def get_active_run():
     with _conn() as c:
         row = c.execute("SELECT * FROM runs WHERE status='running' ORDER BY id DESC LIMIT 1").fetchone()
         return dict(row) if row else None
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+def get_setting(key: str, default=None):
+    with _conn() as c:
+        row = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+        return row["value"] if row else default
+
+
+def set_setting(key: str, value: str):
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (key, value),
+        )
+
+
+def get_all_settings() -> dict:
+    with _conn() as c:
+        return {r["key"]: r["value"] for r in c.execute("SELECT key, value FROM settings")}
 
 
 # ── Run items ─────────────────────────────────────────────────────────────────

@@ -36,6 +36,11 @@
             <i class="bi bi-clock-history me-1"></i>History
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link {% if '/settings' in request.path %}active{% endif %}" href="/settings">
+            <i class="bi bi-folder2-open me-1"></i>Drive Folders
+          </a>
+        </li>
       </ul>
       <a class="nav-link text-muted small" href="/logout">
         <i class="bi bi-box-arrow-right me-1"></i>Logout

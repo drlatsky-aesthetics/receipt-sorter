@@ -183,6 +183,23 @@ def disconnect_account(email):
     return redirect(url_for("accounts"))
 
 
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    config = load_config()
+    categories = config.get("categories", {})
+    if request.method == "POST":
+        for name in categories:
+            folder_id = request.form.get(f"folder_{name}", "").strip()
+            db.set_setting(f"folder_{name}", folder_id)
+        flash("Settings saved.", "success")
+        return redirect(url_for("settings"))
+    saved = db.get_all_settings()
+    return render_template("settings.html", categories=categories, saved=saved)
+
+
 # ── Run ───────────────────────────────────────────────────────────────────────
 
 def _run_job(triggered_by: str = "scheduler"):

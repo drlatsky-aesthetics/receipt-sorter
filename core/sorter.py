@@ -47,6 +47,14 @@ def process_account(account: dict, config: dict, run_id: int) -> dict:
     drive = build("drive", "v3", credentials=creds)
     client = anthropic.Anthropic(api_key=config["anthropic_api_key"])
 
+    # Overlay folder IDs saved via the web settings page
+    db_settings = db.get_all_settings()
+    categories = config.get("categories", {})
+    for name in categories:
+        db_key = f"folder_{name}"
+        if db_key in db_settings and db_settings[db_key]:
+            categories[name]["folder_id"] = db_settings[db_key]
+
     days = config.get("days_back", 7)
     emails = _get_emails(gmail, days, config.get("processed_label", "receipt-sorted"))
 
