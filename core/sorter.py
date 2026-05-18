@@ -47,35 +47,48 @@ def process_account(account: dict, config: dict, run_id: int) -> dict:
     drive = build("drive", "v3", credentials=creds)
     client = anthropic.Anthropic(api_key=config["anthropic_api_key"])
 
-    # Overlay folder IDs saved via the web settings page
-    db_settings = db.get_all_settings()
-    categories = config.get("categories", {})
-    for name in categories:
-        db_key = f"folder_{name}"
-        if db_key in db_settings and db_settings[db_key]:
-            categories[name]["folder_id"] = db_settings[db_key]
+    parent_id = db.get_setting("parent_folder_id", "").strip()
+    if not parent_id:
+        raise ValueError("No Google Drive folder configured. Go to Drive Folders in the nav.")
 
+    # Build folder path: parent → Year → Account email → Category
+    year = datetime.now().strftime("%Y")
+    folder_cache = {}
+
+    def get_folder(name: str, parent: str) -> str:
+        key = (name, parent)
+        if key not in folder_cache:
+            folder_cache[key] = _get_or_create_folder(drive, name, parent)
+        return folder_cache[key]
+
+    year_folder   = get_folder(year, parent_id)
+    account_folder = get_folder(account["email"], year_folder)
+
+    categories = config.get("categories", {})
     days = config.get("days_back", 7)
     emails = _get_emails(gmail, days, config.get("processed_label", "receipt-sorted"))
 
     stats = {"processed": 0, "skipped": 0, "errors": 0}
 
     for email in emails:
-        result = _categorize(client, email, config["categories"])
+        result = _categorize(client, email, categories)
         category = result.get("category", "uncategorized")
         filenames = ", ".join(a["filename"] for a in email["attachments"])
 
-        if category not in config["categories"]:
+        if category not in categories:
             db.add_run_item(run_id, account["email"], email["subject"],
                             email["sender"], "uncategorized",
                             result.get("confidence"), filenames, "skipped")
             stats["skipped"] += 1
             continue
 
-        folder_id = config["categories"][category]["folder_id"]
+        # e.g. treasury_devices → Treasury Devices
+        cat_display = category.replace("_", " ").title()
+        cat_folder = get_folder(cat_display, account_folder)
+
         try:
             for att in email["attachments"]:
-                _upload(drive, gmail, email, att, folder_id)
+                _upload(drive, gmail, email, att, cat_folder)
             _label(gmail, email["id"], config.get("processed_label", "receipt-sorted"))
             db.add_run_item(run_id, account["email"], email["subject"],
                             email["sender"], category,
@@ -91,25 +104,63 @@ def process_account(account: dict, config: dict, run_id: int) -> dict:
     return stats
 
 
+# ── Drive folder helpers ──────────────────────────────────────────────────────
+
+def _get_or_create_folder(drive, name: str, parent_id: str) -> str:
+    safe = name.replace("'", "\\'")
+    q = (
+        f"name='{safe}' and '{parent_id}' in parents "
+        f"and mimeType='application/vnd.google-apps.folder' and trashed=false"
+    )
+    results = drive.files().list(q=q, fields="files(id)", spaces="drive").execute()
+    files = results.get("files", [])
+    if files:
+        return files[0]["id"]
+    folder = drive.files().create(
+        body={
+            "name": name,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": [parent_id],
+        },
+        fields="id",
+    ).execute()
+    return folder["id"]
+
+
+def _upload(drive, gmail, email: dict, att: dict, folder_id: str):
+    data = gmail.users().messages().attachments().get(
+        userId="me", messageId=email["id"], id=att["attachment_id"]
+    ).execute()
+    file_bytes = base64.urlsafe_b64decode(data["data"])
+    name = f"{datetime.now().strftime('%Y-%m-%d')}_{att['filename']}"
+    drive.files().create(
+        body={"name": name, "parents": [folder_id]},
+        media_body=MediaIoBaseUpload(
+            io.BytesIO(file_bytes), mimetype=att["mime_type"], resumable=True
+        ),
+        fields="id",
+    ).execute()
+
+
 # ── Gmail helpers ─────────────────────────────────────────────────────────────
 
 def _get_emails(gmail, days: int, label_filter: str) -> list:
     after = (datetime.now() - timedelta(days=days)).strftime("%Y/%m/%d")
     q = f"has:attachment after:{after} -label:{label_filter}"
     results = gmail.users().messages().list(userId="me", q=q).execute()
-    messages = results.get("messages", [])
     emails = []
-    for msg in messages:
-        data = gmail.users().messages().get(userId="me", id=msg["id"], format="full").execute()
+    for msg in results.get("messages", []):
+        data = gmail.users().messages().get(
+            userId="me", id=msg["id"], format="full"
+        ).execute()
         headers = {h["name"]: h["value"] for h in data["payload"]["headers"]}
-        parts = data["payload"].get("parts", [])
         attachments = [
             {
                 "filename": p["filename"],
                 "attachment_id": p["body"]["attachmentId"],
                 "mime_type": p.get("mimeType", "application/octet-stream"),
             }
-            for p in parts
+            for p in data["payload"].get("parts", [])
             if p.get("filename") and p["body"].get("attachmentId")
         ]
         if attachments:
@@ -133,21 +184,6 @@ def _label(gmail, email_id: str, label_name: str):
         ).execute()["id"]
     gmail.users().messages().modify(
         userId="me", id=email_id, body={"addLabelIds": [label_id]}
-    ).execute()
-
-
-# ── Drive helper ──────────────────────────────────────────────────────────────
-
-def _upload(drive, gmail, email: dict, att: dict, folder_id: str):
-    data = gmail.users().messages().attachments().get(
-        userId="me", messageId=email["id"], id=att["attachment_id"]
-    ).execute()
-    file_bytes = base64.urlsafe_b64decode(data["data"])
-    name = f"{datetime.now().strftime('%Y-%m-%d')}_{att['filename']}"
-    drive.files().create(
-        body={"name": name, "parents": [folder_id]},
-        media_body=MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=att["mime_type"], resumable=True),
-        fields="id",
     ).execute()
 
 

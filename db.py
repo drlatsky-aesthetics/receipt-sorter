@@ -3,7 +3,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "receipt_sorter.db"
+_data_dir = Path("/var/data") if Path("/var/data").exists() else Path(__file__).parent
+DB_PATH = _data_dir / "receipt_sorter.db"
 
 
 def _conn():

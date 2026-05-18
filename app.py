@@ -188,16 +188,13 @@ def disconnect_account(email):
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    config = load_config()
-    categories = config.get("categories", {})
     if request.method == "POST":
-        for name in categories:
-            folder_id = request.form.get(f"folder_{name}", "").strip()
-            db.set_setting(f"folder_{name}", folder_id)
-        flash("Settings saved.", "success")
+        folder_id = request.form.get("parent_folder_id", "").strip()
+        db.set_setting("parent_folder_id", folder_id)
+        flash("Folder ID saved.", "success")
         return redirect(url_for("settings"))
-    saved = db.get_all_settings()
-    return render_template("settings.html", categories=categories, saved=saved)
+    saved_id = db.get_setting("parent_folder_id", "")
+    return render_template("settings.html", saved_id=saved_id)
 
 
 # ── Run ───────────────────────────────────────────────────────────────────────
